@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { User, Mail, Building, Shield, Camera, Save } from 'lucide-react';
 
+const profileImage = new URL('../../../home.png', import.meta.url).href;
+
 const ACTIVITY = [
-  { action: 'Viewed Acme Corporation churn prediction', time: '10 min ago' },
+  { action: 'Viewed Proworld churn prediction', time: '10 min ago' },
   { action: 'Marked 3 alerts as read', time: '2 hours ago' },
   { action: 'Exported customer risk report', time: '5 hours ago' },
   { action: 'Updated risk threshold to 70', time: '1 day ago' },
@@ -12,10 +14,10 @@ const ACTIVITY = [
 export function Profile() {
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState({
-    name: 'John Doe',
-    email: 'john.doe@acmecorp.com',
-    company: 'Acme Corporation',
-    role: 'Head of Customer Success',
+    name: 'Akshat Singh Nayal',
+    email: 'programmer.akshat@gmail.com',
+    company: 'Proworld',
+    role: 'Chief Executive Officer',
     timezone: 'UTC-5 (EST)',
   });
 
@@ -36,7 +38,7 @@ export function Profile() {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 w-full max-w-none">
       <div>
         <h1 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--cs-ink)' }}>Profile</h1>
         <p style={{ fontSize: '14px', color: 'var(--cs-ink-muted)', marginTop: '2px' }}>Manage your personal information and preferences</p>
@@ -45,12 +47,12 @@ export function Profile() {
       {/* Avatar card */}
       <div className="p-6 rounded-2xl flex items-center gap-6" style={{ background: 'var(--cs-card)', border: '1px solid var(--cs-border)', boxShadow: '0 4px 24px var(--accent-glass)' }}>
         <div className="relative">
-          <div
-            className="w-20 h-20 rounded-2xl flex items-center justify-center"
-            style={{ background: 'var(--accent-primary)', fontSize: '28px', fontWeight: 800, color: '#fff' }}
-          >
-            JD
-          </div>
+          <img
+            src={profileImage}
+            alt="Akshat Singh Nayal"
+            className="w-20 h-20 rounded-2xl object-cover"
+            style={{ border: '2px solid var(--cs-border)' }}
+          />
           <button
             className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center"
             style={{ background: 'var(--accent-primary)', color: '#fff' }}

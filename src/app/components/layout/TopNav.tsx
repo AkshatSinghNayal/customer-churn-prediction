@@ -5,6 +5,8 @@ import { AppearanceSwitcher } from '../AppearanceSwitcher';
 import { AccentSwitcher } from '../AccentSwitcher';
 import { useTheme } from '../../context/ThemeContext';
 
+const profileImage = new URL('../../../../home.png', import.meta.url).href;
+
 export function TopNav() {
   const { resolvedAppearance } = useTheme();
   const [searchVal, setSearchVal] = useState('');
@@ -58,13 +60,13 @@ export function TopNav() {
           className="flex items-center gap-2 rounded-lg px-3 py-2 transition-colors"
           style={{ background: 'var(--accent-glass)', color: 'var(--cs-ink)' }}
         >
-          <div
-            className="w-7 h-7 rounded-full flex items-center justify-center"
-            style={{ background: 'var(--accent-primary)', color: '#fff', fontSize: '12px', fontWeight: 600 }}
-          >
-            JD
-          </div>
-          <span style={{ fontSize: '14px', fontWeight: 500 }}>John Doe</span>
+          <img
+            src={profileImage}
+            alt="Akshat Singh Nayal"
+            className="w-7 h-7 rounded-full object-cover"
+            style={{ border: '1px solid var(--cs-border)' }}
+          />
+          <span style={{ fontSize: '14px', fontWeight: 500 }}>Akshat Singh Nayal</span>
           <ChevronDown size={14} style={{ color: 'var(--cs-ink-muted)' }} />
         </button>
         {showUserMenu && (
