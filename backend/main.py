@@ -92,7 +92,11 @@ def predict(customer_id: str):
 
 @app.post("/api/predict-custom")
 def predict_custom(data: dict = Body(...)):
-    return model_service.predict_custom(data)
+    model_name = data.pop("model_name", None)
+    try:
+        return model_service.predict_custom(data, model_name=model_name)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
 
 @app.get("/api/analytics")

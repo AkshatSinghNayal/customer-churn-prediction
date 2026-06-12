@@ -62,6 +62,7 @@ export interface ModelsResponse {
 }
 
 export interface Prediction {
+  model_name?: string;
   customerID: string;
   churn_probability: number;
   predicted_churn: number;

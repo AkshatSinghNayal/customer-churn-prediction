@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 
-def predict_custom(customer_data: dict):
+def predict_custom(customer_data: dict, model_name: str | None = None):
     trained_models = load_pickle("models.pkl")
     scaler = load_pickle("scaler.pkl")
     feature_names = load_pickle("feature_names.pkl")
@@ -12,7 +12,10 @@ def predict_custom(customer_data: dict):
     raw_df = load_pickle("raw_df.pkl")
     metrics = load_json("metrics.json")
     best_name = metrics.get("_best_model", "XGBoost")
-    best_model = trained_models[best_name]
+    selected_name = model_name or best_name
+    if selected_name not in trained_models:
+        raise ValueError(f"Model '{selected_name}' not found")
+    selected_model = trained_models[selected_name]
 
     df = pd.DataFrame([customer_data])
     for col in ["TotalCharges"]:
@@ -36,11 +39,11 @@ def predict_custom(customer_data: dict):
                   not c.startswith(tuple(exclude_from_scaling())) and df[c].dtype in [np.float64, np.int64]]
     df[scale_cols] = scaler.transform(df[scale_cols])
 
-    proba = best_model.predict_proba(df)[:, 1][0]
+    proba = selected_model.predict_proba(df)[:, 1][0]
     
-    # Retrieve the custom tuned threshold for the best model, default to 0.5 if not found
-    best_threshold = metrics.get(best_name, {}).get("metrics", {}).get("best_threshold", 0.5)
-    pred = 1 if proba >= best_threshold else 0
+    # Retrieve the custom tuned threshold for the selected model, default to 0.5 if not found
+    selected_threshold = metrics.get(selected_name, {}).get("metrics", {}).get("best_threshold", 0.5)
+    pred = 1 if proba >= selected_threshold else 0
 
     if proba >= 0.7:
         risk_band = "High"
@@ -53,6 +56,7 @@ def predict_custom(customer_data: dict):
         action = "No action needed."
 
     return {
+        "model_name": selected_name,
         "churn_probability": round(float(proba), 4),
         "predicted_churn": int(pred),
         "risk_band": risk_band,

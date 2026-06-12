@@ -5,6 +5,7 @@ import { api } from '../services/api';
 import type { ModelsResponse, ModelInfo, ModelMetricsValue } from '../types';
 
 const MODEL_NAMES = ['Logistic Regression', 'Random Forest', 'XGBoost'];
+const PREFERRED_MODEL_KEY = 'churnsight-preferred-model';
 
 const modelDescriptions: Record<string, string> = {
   'Logistic Regression': 'Interpretable linear baseline model for churn classification.',
@@ -65,7 +66,12 @@ export function Models() {
   useEffect(() => {
     api.getModels().then(data => {
       setModelsData(data);
-      if (data._best_model) setSelected(data._best_model);
+      const storedModel = localStorage.getItem(PREFERRED_MODEL_KEY);
+      if (storedModel && data[storedModel]) {
+        setSelected(storedModel);
+      } else if (data._best_model) {
+        setSelected(data._best_model);
+      }
     });
   }, []);
 
@@ -91,7 +97,10 @@ export function Models() {
           return (
             <button
               key={name}
-              onClick={() => setSelected(name)}
+              onClick={() => {
+                setSelected(name);
+                localStorage.setItem(PREFERRED_MODEL_KEY, name);
+              }}
               className="p-6 rounded-2xl text-left transition-all"
               style={{
                 background: 'var(--cs-card)',
@@ -116,6 +125,9 @@ export function Models() {
                     <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--accent-primary)' }}>{(v * 100).toFixed(1)}%</div>
                   </div>
                 ))}
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--cs-ink-muted)', marginTop: '10px' }}>
+                Click to set this as the default model for custom predictions.
               </div>
             </button>
           );

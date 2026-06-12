@@ -5,6 +5,9 @@ import { useTheme } from '../context/ThemeContext';
 import { api } from '../services/api';
 import type { Prediction, FeatureImportance } from '../types';
 
+const PREFERRED_MODEL_KEY = 'churnsight-preferred-model';
+const MODEL_OPTIONS = ['Logistic Regression', 'Random Forest', 'XGBoost'];
+
 const INITIAL_FORM = {
   customerID: 'CUSTOM123',
   gender: 'Male',
@@ -42,6 +45,10 @@ export function Predictions() {
   const [featureImportance, setFeatureImportance] = useState<FeatureImportance[]>([]);
 
   const [form, setForm] = useState(INITIAL_FORM);
+  const [selectedModel, setSelectedModel] = useState(() => {
+    if (typeof window === 'undefined') return 'XGBoost';
+    return localStorage.getItem(PREFERRED_MODEL_KEY) || 'XGBoost';
+  });
   const [result, setResult] = useState<Prediction | null>(null);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -52,7 +59,7 @@ export function Predictions() {
   const handlePredict = async () => {
     setLoading(true);
     try {
-      const res = await api.predictCustom(form as unknown as Record<string, unknown>);
+      const res = await api.predictCustom({ ...form, model_name: selectedModel } as unknown as Record<string, unknown>);
       setResult(res);
     } catch {
       setResult(null);
@@ -100,6 +107,23 @@ export function Predictions() {
         {showForm && (
           <div className="px-6 pb-6">
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--cs-ink-muted)', display: 'block', marginBottom: '4px' }}>Model</label>
+                <select
+                  value={selectedModel}
+                  onChange={e => {
+                    const nextModel = e.target.value;
+                    setSelectedModel(nextModel);
+                    localStorage.setItem(PREFERRED_MODEL_KEY, nextModel);
+                  }}
+                  className="w-full rounded-lg px-3 py-2 outline-none text-sm"
+                  style={{ background: 'var(--accent-glass)', border: '1px solid var(--cs-border)', color: 'var(--cs-ink)' }}
+                >
+                  {MODEL_OPTIONS.map(model => (
+                    <option key={model} value={model} style={{ background: 'var(--cs-card)', color: 'var(--cs-ink)' }}>{model}</option>
+                  ))}
+                </select>
+              </div>
               {[
                 { key: 'customerID', label: 'Customer ID', type: 'text' },
                 { key: 'gender', label: 'Gender', type: 'select', options: ['Male', 'Female'] },
@@ -173,6 +197,12 @@ export function Predictions() {
               <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--cs-ink-muted)', marginBottom: '2px' }}>PREDICTION</p>
               <p style={{ fontSize: '18px', fontWeight: 700, color: result.predicted_churn ? 'var(--coral-churn)' : 'var(--green-safe)' }}>
                 {result.predicted_churn ? 'Will Churn' : 'Will Stay'}
+              </p>
+            </div>
+            <div>
+              <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--cs-ink-muted)', marginBottom: '2px' }}>MODEL USED</p>
+              <p style={{ fontSize: '18px', fontWeight: 700, color: 'var(--cs-ink)' }}>
+                {result.model_name || selectedModel}
               </p>
             </div>
             <div>
