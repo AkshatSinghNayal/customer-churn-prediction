@@ -1,0 +1,18 @@
+{
+  "Logistic Regression": {
+    "C": 0.1,
+    "penalty": "l2",
+    "solver": "liblinear"
+  },
+  "Random Forest": {
+    "max_depth": 10,
+    "min_samples_split": 10,
+    "n_estimators": 100
+  },
+  "XGBoost": {
+    "colsample_bytree": 0.7,
+    "learning_rate": 0.05,
+    "max_depth": 3,
+    "subsample": 0.7
+  }
+}

@@ -1,0 +1,330 @@
+{
+  "Logistic Regression": {
+    "metrics": {
+      "accuracy": 0.7715,
+      "precision": 0.5546,
+      "recall": 0.7059,
+      "f1": 0.6212,
+      "roc_auc": 0.8464,
+      "confusion_matrix": [
+        [
+          823,
+          212
+        ],
+        [
+          110,
+          264
+        ]
+      ],
+      "best_threshold": 0.59
+    },
+    "feature_importance": [
+      {
+        "feature": "Contract_Two year",
+        "importance": 0.997
+      },
+      {
+        "feature": "is_month_to_month",
+        "importance": 0.9019
+      },
+      {
+        "feature": "MonthlyCharges",
+        "importance": 0.8169
+      },
+      {
+        "feature": "avg_charge_per_tenure",
+        "importance": 0.7183
+      },
+      {
+        "feature": "InternetService_Fiber optic",
+        "importance": 0.6108
+      },
+      {
+        "feature": "InternetService_No",
+        "importance": 0.5163
+      },
+      {
+        "feature": "PaperlessBilling_Yes",
+        "importance": 0.3265
+      },
+      {
+        "feature": "PhoneService_Yes",
+        "importance": 0.3255
+      },
+      {
+        "feature": "has_phone_service",
+        "importance": 0.3255
+      },
+      {
+        "feature": "tenure",
+        "importance": 0.3142
+      },
+      {
+        "feature": "tenure_bin",
+        "importance": 0.2735
+      },
+      {
+        "feature": "senior_x_month_to_month",
+        "importance": 0.2715
+      },
+      {
+        "feature": "is_automatic_payment",
+        "importance": 0.2289
+      },
+      {
+        "feature": "has_online_security",
+        "importance": 0.2288
+      },
+      {
+        "feature": "OnlineSecurity_Yes",
+        "importance": 0.2288
+      },
+      {
+        "feature": "PaymentMethod_Mailed check",
+        "importance": 0.2108
+      },
+      {
+        "feature": "OnlineBackup_Yes",
+        "importance": 0.2044
+      },
+      {
+        "feature": "TechSupport_Yes",
+        "importance": 0.2035
+      },
+      {
+        "feature": "has_tech_support",
+        "importance": 0.2035
+      },
+      {
+        "feature": "Contract_One year",
+        "importance": 0.1944
+      }
+    ]
+  },
+  "Random Forest": {
+    "metrics": {
+      "accuracy": 0.78,
+      "precision": 0.5667,
+      "recall": 0.7273,
+      "f1": 0.637,
+      "roc_auc": 0.8442,
+      "confusion_matrix": [
+        [
+          827,
+          208
+        ],
+        [
+          102,
+          272
+        ]
+      ],
+      "best_threshold": 0.53
+    },
+    "feature_importance": [
+      {
+        "feature": "avg_charge_per_service",
+        "importance": 0.1342
+      },
+      {
+        "feature": "tenure_x_contract",
+        "importance": 0.1069
+      },
+      {
+        "feature": "monthly_to_total_ratio",
+        "importance": 0.0761
+      },
+      {
+        "feature": "is_month_to_month",
+        "importance": 0.0654
+      },
+      {
+        "feature": "MonthlyCharges",
+        "importance": 0.0582
+      },
+      {
+        "feature": "tenure",
+        "importance": 0.0509
+      },
+      {
+        "feature": "avg_charge_per_tenure",
+        "importance": 0.0446
+      },
+      {
+        "feature": "InternetService_Fiber optic",
+        "importance": 0.0432
+      },
+      {
+        "feature": "TotalCharges",
+        "importance": 0.0425
+      },
+      {
+        "feature": "expected_total_charges",
+        "importance": 0.0397
+      },
+      {
+        "feature": "Contract_Two year",
+        "importance": 0.0356
+      },
+      {
+        "feature": "charges_diff",
+        "importance": 0.0334
+      },
+      {
+        "feature": "tenure_bin",
+        "importance": 0.0322
+      },
+      {
+        "feature": "charges_ratio",
+        "importance": 0.0317
+      },
+      {
+        "feature": "PaymentMethod_Electronic check",
+        "importance": 0.0237
+      },
+      {
+        "feature": "tenure_x_partner",
+        "importance": 0.0203
+      },
+      {
+        "feature": "tenure_x_dependents",
+        "importance": 0.0161
+      },
+      {
+        "feature": "InternetService_No",
+        "importance": 0.0127
+      },
+      {
+        "feature": "Contract_One year",
+        "importance": 0.0114
+      },
+      {
+        "feature": "is_automatic_payment",
+        "importance": 0.01
+      }
+    ]
+  },
+  "XGBoost": {
+    "metrics": {
+      "accuracy": 0.775,
+      "precision": 0.5597,
+      "recall": 0.7139,
+      "f1": 0.6275,
+      "roc_auc": 0.8474,
+      "confusion_matrix": [
+        [
+          825,
+          210
+        ],
+        [
+          107,
+          267
+        ]
+      ],
+      "best_threshold": 0.6
+    },
+    "feature_importance": [
+      {
+        "feature": "is_month_to_month",
+        "importance": 0.3118
+      },
+      {
+        "feature": "tenure_x_contract",
+        "importance": 0.062
+      },
+      {
+        "feature": "InternetService_Fiber optic",
+        "importance": 0.0599
+      },
+      {
+        "feature": "avg_charge_per_service",
+        "importance": 0.0447
+      },
+      {
+        "feature": "InternetService_No",
+        "importance": 0.0445
+      },
+      {
+        "feature": "PaymentMethod_Electronic check",
+        "importance": 0.0371
+      },
+      {
+        "feature": "tenure_bin",
+        "importance": 0.0339
+      },
+      {
+        "feature": "Contract_Two year",
+        "importance": 0.0299
+      },
+      {
+        "feature": "tenure",
+        "importance": 0.0269
+      },
+      {
+        "feature": "StreamingMovies_Yes",
+        "importance": 0.0195
+      },
+      {
+        "feature": "Contract_One year",
+        "importance": 0.0187
+      },
+      {
+        "feature": "PaperlessBilling_Yes",
+        "importance": 0.0185
+      },
+      {
+        "feature": "monthly_to_total_ratio",
+        "importance": 0.0181
+      },
+      {
+        "feature": "StreamingTV_Yes",
+        "importance": 0.0172
+      },
+      {
+        "feature": "OnlineSecurity_Yes",
+        "importance": 0.0166
+      },
+      {
+        "feature": "has_online_security",
+        "importance": 0.016
+      },
+      {
+        "feature": "tenure_x_dependents",
+        "importance": 0.0147
+      },
+      {
+        "feature": "TotalCharges",
+        "importance": 0.0138
+      },
+      {
+        "feature": "MonthlyCharges",
+        "importance": 0.0137
+      },
+      {
+        "feature": "senior_x_month_to_month",
+        "importance": 0.013
+      }
+    ]
+  },
+  "Ensemble (Voting)": {
+    "metrics": {
+      "accuracy": 0.7715,
+      "precision": 0.5522,
+      "recall": 0.7353,
+      "f1": 0.6307,
+      "roc_auc": 0.8491,
+      "confusion_matrix": [
+        [
+          812,
+          223
+        ],
+        [
+          99,
+          275
+        ]
+      ],
+      "best_threshold": 0.55
+    },
+    "feature_importance": []
+  },
+  "_best_model": "Random Forest"
+}

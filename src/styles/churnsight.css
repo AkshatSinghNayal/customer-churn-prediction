@@ -1,0 +1,43 @@
+/* ChurnSight base theme tokens — dynamically overridden by ThemeContext via JS */
+:root {
+  --accent-primary: #009688;
+  --accent-deep: #00695C;
+  --accent-light: #E0F2F1;
+  --accent-glass: rgba(0, 150, 136, 0.12);
+  --cs-ink: #0A1F1C;
+  --cs-ink-muted: #5C6F6C;
+  --cs-surface: #F7FAFA;
+  --cs-card: #FFFFFF;
+  --cs-border: rgba(0, 0, 0, 0.10);
+  --coral-churn: #EF5350;
+  --amber-watch: #FFA726;
+  --green-safe: #66BB6A;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--cs-surface);
+  color: var(--cs-ink);
+}
+
+input, select, textarea, button {
+  font-family: inherit;
+}
+
+/* Force standard browser select options to match the active color scheme */
+select option {
+  background-color: var(--cs-card) !important;
+  color: var(--cs-ink) !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--accent-glass); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
