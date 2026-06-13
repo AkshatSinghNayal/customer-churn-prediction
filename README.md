@@ -32,6 +32,24 @@ During our initial analysis and exploratory data engineering, we observed severa
 
 ---
 
+## Engineered Features
+
+The following features were custom engineered to enhance the model's predictive capability:
+
+| Feature | Type | Description (One-Liner) |
+| :--- | :--- | :--- |
+| `is_automatic_payment` | Binary | Flag indicating if payment is automated (Credit Card or Bank Transfer). |
+| `expected_total_charges` | Numeric | Theoretical total charge calculated as `MonthlyCharges * tenure`. |
+| `charges_diff` | Numeric | Difference between actual total charges and expected total charges. |
+| `charges_ratio` | Numeric | Ratio of actual total charges to expected total charges. |
+| `senior_x_month_to_month` | Interaction | Interaction flag indicating a senior citizen on a high-risk month-to-month contract. |
+| `service_count` | Count | Total number of additional services the customer is subscribed to. |
+| `has_multiple_services` | Binary | Flag indicating if the customer has subscribed to more than one additional service. |
+| `avg_charge_per_tenure` | Numeric | Average charges accumulated per unit of tenure (`TotalCharges / (tenure + 1)`). |
+| `tenure_bin` | Ordinal | Categorical bracket for customer tenure (0-12, 12-24, 24-48, 48-72, 72+ months). |
+
+---
+
 ## Optimization Steps to Achieve High Accuracy
 
 To maximize model performance, we engineered a flexible ML pipeline with toggles exposed on the front-end dashboard:
