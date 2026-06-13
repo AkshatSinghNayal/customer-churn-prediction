@@ -32,21 +32,32 @@ During our initial analysis and exploratory data engineering, we observed severa
 
 ---
 
-## Engineered Features
+## Customer Profile Features
 
-The following features were custom engineered to enhance the model's predictive capability:
+The model uses the following customer attributes to predict the probability of churn:
 
 | Feature | Type | Description (One-Liner) |
 | :--- | :--- | :--- |
-| `is_automatic_payment` | Binary | Flag indicating if payment is automated (Credit Card or Bank Transfer). |
-| `expected_total_charges` | Numeric | Theoretical total charge calculated as `MonthlyCharges * tenure`. |
-| `charges_diff` | Numeric | Difference between actual total charges and expected total charges. |
-| `charges_ratio` | Numeric | Ratio of actual total charges to expected total charges. |
-| `senior_x_month_to_month` | Interaction | Interaction flag indicating a senior citizen on a high-risk month-to-month contract. |
-| `service_count` | Count | Total number of additional services the customer is subscribed to. |
-| `has_multiple_services` | Binary | Flag indicating if the customer has subscribed to more than one additional service. |
-| `avg_charge_per_tenure` | Numeric | Average charges accumulated per unit of tenure (`TotalCharges / (tenure + 1)`). |
-| `tenure_bin` | Ordinal | Categorical bracket for customer tenure (0-12, 12-24, 24-48, 48-72, 72+ months). |
+| `CustomerID` | Text | Unique identifier for each customer. |
+| `Gender` | Categorical | Gender of the customer (Male or Female). |
+| `SeniorCitizen` | Binary | Indicates if the customer is a senior citizen (1: Yes, 0: No). |
+| `Partner` | Binary | Indicates if the customer has a partner (Yes or No). |
+| `Dependents` | Binary | Indicates if the customer has dependents (Yes or No). |
+| `Tenure` | Numeric | Number of months the customer has stayed with the company. |
+| `PhoneService` | Binary | Indicates if the customer has a phone service (Yes or No). |
+| `MultipleLines` | Categorical | Indicates if the customer has multiple phone lines (Yes, No, or No Phone Service). |
+| `InternetService` | Categorical | Customer's internet service provider type (DSL, Fiber optic, or No). |
+| `OnlineSecurity` | Categorical | Indicates if the customer has online security add-on (Yes, No, or No Internet Service). |
+| `OnlineBackup` | Categorical | Indicates if the customer has online backup add-on (Yes, No, or No Internet Service). |
+| `DeviceProtection` | Categorical | Indicates if the customer has device protection add-on (Yes, No, or No Internet Service). |
+| `TechSupport` | Categorical | Indicates if the customer has tech support add-on (Yes, No, or No Internet Service). |
+| `StreamingTV` | Categorical | Indicates if the customer has streaming TV service (Yes, No, or No Internet Service). |
+| `StreamingMovies` | Categorical | Indicates if the customer has streaming movies service (Yes, No, or No Internet Service). |
+| `Contract` | Categorical | The contract term duration of the customer (Month-to-month, One year, or Two year). |
+| `PaperlessBilling` | Binary | Indicates if the customer has paperless billing enabled (Yes or No). |
+| `PaymentMethod` | Categorical | The customer's billing payment method (Electronic check, Mailed check, Bank transfer, Credit card). |
+| `MonthlyCharges` | Numeric | The amount billed to the customer monthly. |
+| `TotalCharges` | Numeric | The total amount billed to the customer over their entire tenure. |
 
 ---
 
