@@ -46,13 +46,13 @@ To maximize model performance, we engineered a flexible ML pipeline with toggles
 
 The table below shows the performance of the models trained **without class weight balancing** and **without category collapsing** (which maximizes overall accuracy):
 
-| Model | Accuracy | F1-Score | ROC-AUC | Optimal Threshold |
-| :--- | :---: | :---: | :---: | :---: |
-| **XGBoost** | **78.1%** | **62.4%** | **83.4%** | - |
-| Ensemble (Voting) | 77.9% | 62.4% | 84.0% | 0.49 |
-| LightGBM | 77.8% | 62.2% | 83.7% | - |
-| Random Forest | 76.6% | 62.6% | 82.8% | - |
-| Logistic Regression | 75.9% | 60.1% | 83.5% | - |
+| Model | Accuracy | Precision | Recall | F1-Score | ROC-AUC | Optimal Threshold |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **XGBoost (Best)** | **78.1%** | **57.4%** | **68.2%** | **62.4%** | **83.4%** | **0.51** |
+| Ensemble (Voting) | 77.9% | 56.8% | 69.3% | 62.4% | 84.0% | 0.49 |
+| LightGBM | 77.8% | 56.7% | 69.0% | 62.2% | 83.7% | 0.51 |
+| Random Forest | 76.6% | 54.3% | 73.8% | 62.6% | 82.8% | 0.41 |
+| Logistic Regression | 75.9% | 53.6% | 68.5% | 60.1% | 83.5% | 0.46 |
 
 ---
 
