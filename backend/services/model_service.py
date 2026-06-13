@@ -17,6 +17,14 @@ def predict_custom(customer_data: dict, model_name: str | None = None):
         raise ValueError(f"Model '{selected_name}' not found")
     selected_model = trained_models[selected_name]
 
+    # Load configuration to get drop_collinear, collapse_internet
+    try:
+        config = load_json("config.json")
+    except Exception:
+        config = {}
+    drop_redundant = config.get("drop_collinear", False)
+    collapse_internet = config.get("collapse_internet", False)
+
     df = pd.DataFrame([customer_data])
     for col in ["TotalCharges"]:
         if col in df.columns:
@@ -24,7 +32,7 @@ def predict_custom(customer_data: dict, model_name: str | None = None):
     if "TotalCharges" in df.columns:
         df["TotalCharges"] = df["TotalCharges"].fillna(0)
 
-    df = engineer_features(df)
+    df = engineer_features(df, drop_redundant=drop_redundant, collapse_internet=collapse_internet)
     df["Churn"] = 0
     df = df.drop(columns=["customerID"], errors="ignore")
 
@@ -78,7 +86,7 @@ def exclude_from_scaling():
 def get_all_models():
     metrics = load_json("metrics.json")
     models_info = {}
-    for name in ["Logistic Regression", "Random Forest", "XGBoost"]:
+    for name in ["Logistic Regression", "Random Forest", "XGBoost", "LightGBM", "Ensemble (Voting)"]:
         if name in metrics:
             models_info[name] = metrics[name]
     models_info["_best_model"] = metrics.get("_best_model", "XGBoost")
@@ -95,7 +103,19 @@ def get_model_detail(name):
 def get_feature_importance():
     metrics = load_json("metrics.json")
     best_model_name = metrics.get("_best_model", "XGBoost")
-    return metrics.get(best_model_name, {}).get("feature_importance", [])
+    importance = metrics.get(best_model_name, {}).get("feature_importance", [])
+    if not importance:
+        individual_models = [
+            m for m in metrics
+            if m not in ["_best_model", "Ensemble (Voting)"] and isinstance(metrics[m], dict)
+        ]
+        if individual_models:
+            best_individual = max(
+                individual_models,
+                key=lambda m: metrics[m].get("metrics", {}).get("f1", 0)
+            )
+            importance = metrics[best_individual].get("feature_importance", [])
+    return importance
 
 
 def predict_single(customer_id):
@@ -124,3 +144,17 @@ def get_all_predictions(page=1, per_page=20, risk_band=None, sort_by=None):
         "per_page": per_page,
         "total_pages": total_pages,
     }
+
+
+def get_config():
+    try:
+        return load_json("config.json")
+    except Exception:
+        return {
+            "drop_collinear": True,
+            "drop_noise": True,
+            "use_smote": False,
+            "use_class_weight": True,
+            "collapse_internet": False,
+            "models": ["Logistic Regression", "Random Forest", "XGBoost", "LightGBM", "Ensemble (Voting)"]
+        }

@@ -6,7 +6,6 @@ import { api } from '../services/api';
 import type { Prediction, FeatureImportance } from '../types';
 
 const PREFERRED_MODEL_KEY = 'churnsight-preferred-model';
-const MODEL_OPTIONS = ['Logistic Regression', 'Random Forest', 'XGBoost'];
 
 const INITIAL_FORM = {
   customerID: 'CUSTOM123',
@@ -45,6 +44,7 @@ export function Predictions() {
   const [featureImportance, setFeatureImportance] = useState<FeatureImportance[]>([]);
 
   const [form, setForm] = useState(INITIAL_FORM);
+  const [modelOptions, setModelOptions] = useState<string[]>(['Logistic Regression', 'Random Forest', 'XGBoost', 'LightGBM', 'Ensemble (Voting)']);
   const [selectedModel, setSelectedModel] = useState(() => {
     if (typeof window === 'undefined') return 'XGBoost';
     return localStorage.getItem(PREFERRED_MODEL_KEY) || 'XGBoost';
@@ -74,6 +74,21 @@ export function Predictions() {
       setTotalPages(res.total_pages);
     });
   }, [page, riskFilter]);
+
+  useEffect(() => {
+    api.getModels().then(data => {
+      const options = Object.keys(data).filter(k => k !== '_best_model');
+      if (options.length > 0) {
+        setModelOptions(options);
+      }
+      const preferred = localStorage.getItem(PREFERRED_MODEL_KEY);
+      if (preferred && data[preferred]) {
+        setSelectedModel(preferred);
+      } else if (data._best_model) {
+        setSelectedModel(data._best_model);
+      }
+    }).catch(err => console.error(err));
+  }, []);
 
   useEffect(() => {
     api.getFeatureImportance().then(setFeatureImportance);
@@ -119,7 +134,7 @@ export function Predictions() {
                   className="w-full rounded-lg px-3 py-2 outline-none text-sm"
                   style={{ background: 'var(--accent-glass)', border: '1px solid var(--cs-border)', color: 'var(--cs-ink)' }}
                 >
-                  {MODEL_OPTIONS.map(model => (
+                  {modelOptions.map(model => (
                     <option key={model} value={model} style={{ background: 'var(--cs-card)', color: 'var(--cs-ink)' }}>{model}</option>
                   ))}
                 </select>

@@ -27,11 +27,12 @@ def clean_data(df):
     return df
 
 
-def engineer_features(df):
+def engineer_features(df, drop_redundant=False, collapse_internet=False):
     df = df.copy()
 
-    for col in NO_INTERNET_COLS:
-        df[col] = df[col].replace("No internet service", "No")
+    if collapse_internet:
+        for col in NO_INTERNET_COLS:
+            df[col] = df[col].replace("No internet service", "No")
 
     services = ["PhoneService", "MultipleLines"] + NO_INTERNET_COLS
     df["service_count"] = df[services].apply(
@@ -41,35 +42,50 @@ def engineer_features(df):
         axis=1,
     )
 
-    df["has_online_security"] = (df["OnlineSecurity"] == "Yes").astype(int)
-    df["has_tech_support"] = (df["TechSupport"] == "Yes").astype(int)
-    df["has_phone_service"] = (df["PhoneService"] == "Yes").astype(int)
-    df["has_multiple_lines"] = (df["MultipleLines"] == "Yes").astype(int)
-    df["has_multiple_services"] = (df["service_count"] > 1).astype(int)
+    if not drop_redundant:
+        df["has_online_security"] = (df["OnlineSecurity"] == "Yes").astype(int)
+        df["has_tech_support"] = (df["TechSupport"] == "Yes").astype(int)
+        df["has_phone_service"] = (df["PhoneService"] == "Yes").astype(int)
+        df["has_multiple_lines"] = (df["MultipleLines"] == "Yes").astype(int)
+        df["has_multiple_services"] = (df["service_count"] > 1).astype(int)
 
-    df["avg_charge_per_service"] = df["MonthlyCharges"] / (df["service_count"] + 1)
-    df["avg_charge_per_tenure"] = df["TotalCharges"] / (df["tenure"] + 1)
-    df["monthly_to_total_ratio"] = df["MonthlyCharges"] / (df["TotalCharges"] + 1)
+        df["avg_charge_per_service"] = df["MonthlyCharges"] / (df["service_count"] + 1)
+        df["avg_charge_per_tenure"] = df["TotalCharges"] / (df["tenure"] + 1)
+        df["monthly_to_total_ratio"] = df["MonthlyCharges"] / (df["TotalCharges"] + 1)
 
-    # 1. Automatic payment indicator
-    df["is_automatic_payment"] = df["PaymentMethod"].str.contains("automatic").astype(int)
-    
-    # 2. Charges variance (actual vs expected total charges)
-    df["expected_total_charges"] = df["MonthlyCharges"] * df["tenure"]
-    df["charges_diff"] = df["TotalCharges"] - df["expected_total_charges"]
-    df["charges_ratio"] = df["TotalCharges"] / (df["expected_total_charges"] + 1)
+        # 1. Automatic payment indicator
+        df["is_automatic_payment"] = df["PaymentMethod"].str.contains("automatic").astype(int)
+        
+        # 2. Charges variance (actual vs expected total charges)
+        df["expected_total_charges"] = df["MonthlyCharges"] * df["tenure"]
+        df["charges_diff"] = df["TotalCharges"] - df["expected_total_charges"]
+        df["charges_ratio"] = df["TotalCharges"] / (df["expected_total_charges"] + 1)
 
-    # 3. Contract interactions
-    df["is_month_to_month"] = (df["Contract"] == "Month-to-month").astype(int)
-    df["senior_x_month_to_month"] = df["SeniorCitizen"] * df["is_month_to_month"]
-    df["tenure_x_contract"] = df["tenure"] * df["is_month_to_month"]
-    df["tenure_x_dependents"] = df["tenure"] * (df["Dependents"] == "Yes").astype(int)
-    df["tenure_x_partner"] = df["tenure"] * (df["Partner"] == "Yes").astype(int)
+        # 3. Contract interactions
+        df["is_month_to_month"] = (df["Contract"] == "Month-to-month").astype(int)
+        df["senior_x_month_to_month"] = df["SeniorCitizen"] * df["is_month_to_month"]
+        df["tenure_x_contract"] = df["tenure"] * df["is_month_to_month"]
+        df["tenure_x_dependents"] = df["tenure"] * (df["Dependents"] == "Yes").astype(int)
+        df["tenure_x_partner"] = df["tenure"] * (df["Partner"] == "Yes").astype(int)
 
-    tenure_bins = [0, 12, 24, 48, 72, 999]
-    df["tenure_bin"] = pd.cut(
-        df["tenure"], bins=tenure_bins, labels=range(len(tenure_bins) - 1), right=False
-    ).astype(int)
+        tenure_bins = [0, 12, 24, 48, 72, 999]
+        df["tenure_bin"] = pd.cut(
+            df["tenure"], bins=tenure_bins, labels=range(len(tenure_bins) - 1), right=False
+        ).astype(int)
+    else:
+        # Avoid creating collinear duplicated features
+        df["avg_charge_per_service"] = df["MonthlyCharges"] / (df["service_count"] + 1)
+        df["monthly_to_total_ratio"] = df["MonthlyCharges"] / (df["TotalCharges"] + 1)
+        df["is_automatic_payment"] = df["PaymentMethod"].str.contains("automatic").astype(int)
+        
+        # Keep charges diff but removeexpected_total_charges which is duplicated with TotalCharges
+        df["charges_diff"] = df["TotalCharges"] - (df["MonthlyCharges"] * df["tenure"])
+        
+        df["is_month_to_month"] = (df["Contract"] == "Month-to-month").astype(int)
+        df["senior_x_month_to_month"] = df["SeniorCitizen"] * df["is_month_to_month"]
+        df["tenure_x_contract"] = df["tenure"] * df["is_month_to_month"]
+        df["tenure_x_dependents"] = df["tenure"] * (df["Dependents"] == "Yes").astype(int)
+        df["tenure_x_partner"] = df["tenure"] * (df["Partner"] == "Yes").astype(int)
 
     return df
 
@@ -122,13 +138,28 @@ def split_data(df):
     return X_train, X_test, y_train, y_test
 
 
-def preprocess():
+def preprocess(drop_redundant=False, drop_noise=False, collapse_internet=False):
     df = load_raw_data()
     df = clean_data(df)
     df_raw = df.copy()
-    df = engineer_features(df)
+    df = engineer_features(df, drop_redundant=drop_redundant, collapse_internet=collapse_internet)
     df_encoded, customer_ids = encode_features(df)
     X_train, X_test, y_train, y_test = split_data(df_encoded)
+    
+    if drop_noise:
+        # Find training samples with identical feature values but different labels
+        train_df = X_train.copy()
+        train_df["Churn"] = y_train
+        feature_cols = X_train.columns.tolist()
+        duplicates = train_df.duplicated(subset=feature_cols, keep=False)
+        if duplicates.sum() > 0:
+            dup_df = train_df[duplicates]
+            grouped = dup_df.groupby(feature_cols)["Churn"].nunique()
+            conflicting_indices = grouped[grouped > 1].index
+            is_conflicting = train_df.set_index(feature_cols).index.isin(conflicting_indices)
+            X_train = X_train[~is_conflicting]
+            y_train = y_train[~is_conflicting]
+            
     X_train, X_test, scaler = scale_features(X_train, X_test)
 
     preprocessed_path = os.path.join(

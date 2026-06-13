@@ -1,0 +1,15 @@
+{
+  "drop_collinear": true,
+  "drop_noise": true,
+  "use_smote": true,
+  "use_class_weight": false,
+  "collapse_internet": false,
+  "models": [
+    "Logistic Regression",
+    "Random Forest",
+    "XGBoost",
+    "LightGBM",
+    "Ensemble (Voting)"
+  ],
+  "opt_metric": "accuracy"
+}

@@ -117,17 +117,35 @@ def update_alert(alert_id: str, read: bool = None, dismissed: bool = None):
     return result
 
 
+@app.get("/api/config")
+def get_config():
+    return model_service.get_config()
+
+
 @app.post("/api/retrain")
-def retrain():
+def retrain(config: dict = Body(None)):
     import os
     import shutil
     from pipeline.utils import ARTIFACTS_DIR
     for f in os.listdir(ARTIFACTS_DIR):
         fp = os.path.join(ARTIFACTS_DIR, f)
         if os.path.isfile(fp):
-            os.remove(fp)
+            try:
+                os.remove(fp)
+            except Exception:
+                pass
+        elif os.path.isdir(fp) and f == "models":
+            try:
+                shutil.rmtree(fp)
+            except Exception:
+                pass
     from pipeline.train import run_training
-    return run_training()
+    metrics, best_params = run_training(config=config)
+    return {
+        "status": "success",
+        "metrics": metrics,
+        "best_params": best_params
+    }
 
 
 if __name__ == "__main__":

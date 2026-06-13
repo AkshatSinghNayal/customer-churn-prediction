@@ -14,6 +14,7 @@ from sklearn.metrics import (
     confusion_matrix,
 )
 from xgboost import XGBClassifier
+from lightgbm import LGBMClassifier
 from . import preprocess
 from .utils import save_pickle, save_json, artifact_exists, load_pickle, load_json, ARTIFACTS_DIR
 
@@ -35,6 +36,13 @@ XGB_GRID = {
     "max_depth": [3, 5, 7],
     "subsample": [0.7, 0.8, 1.0],
     "colsample_bytree": [0.7, 0.8, 1.0],
+}
+
+LGBM_GRID = {
+    "learning_rate": [0.01, 0.05, 0.1],
+    "max_depth": [3, 5, 7],
+    "n_estimators": [100, 200],
+    "subsample": [0.8, 1.0],
 }
 
 MODELS_DIR = os.path.join(ARTIFACTS_DIR, "models")
@@ -97,9 +105,32 @@ def tune_model(name, base_model, param_grid, X_train, y_train):
     return grid.best_estimator_, grid.best_params_
 
 
-def run_training(use_smote=False):
+def run_training(config=None):
+    if config is None:
+        config = {
+            "drop_collinear": True,
+            "drop_noise": True,
+            "use_smote": False,
+            "use_class_weight": True,
+            "collapse_internet": False,
+            "models": ["Logistic Regression", "Random Forest", "XGBoost", "LightGBM", "Ensemble (Voting)"]
+        }
+    
+    print(f"Training with config: {config}")
+    
+    drop_collinear = config.get("drop_collinear", False)
+    drop_noise = config.get("drop_noise", False)
+    use_smote = config.get("use_smote", False)
+    use_class_weight = config.get("use_class_weight", True)
+    collapse_internet = config.get("collapse_internet", False)
+    active_models = config.get("models", ["Logistic Regression", "Random Forest", "XGBoost", "LightGBM", "Ensemble (Voting)"])
+    
     print("Loading and preprocessing data...")
-    X_train, X_test, y_train, y_test, df_encoded, customer_ids, raw_df, scaler = preprocess.preprocess()
+    X_train, X_test, y_train, y_test, df_encoded, customer_ids, raw_df, scaler = preprocess.preprocess(
+        drop_redundant=drop_collinear,
+        drop_noise=drop_noise,
+        collapse_internet=collapse_internet
+    )
 
     if use_smote:
         print("Applying SMOTE...")
@@ -114,64 +145,97 @@ def run_training(use_smote=False):
     best_params_map = {}
 
     # Logistic Regression
-    lr_base = LogisticRegression(
-        class_weight="balanced", max_iter=1000, random_state=42
-    )
-    lr_best, lr_params = tune_model("Logistic Regression", lr_base, LR_GRID, X_train, y_train)
-    lr_thresh = find_best_threshold(lr_best, X_train, y_train)
-    trained_models["Logistic Regression"] = lr_best
-    best_params_map["Logistic Regression"] = lr_params
-    all_metrics["Logistic Regression"] = {
-        "metrics": evaluate_model(lr_best, X_test, y_test, lr_thresh),
-        "feature_importance": get_feature_importance(lr_best, feature_names, "Logistic Regression"),
-    }
-    print(f"  Test F1: {all_metrics['Logistic Regression']['metrics']['f1']:.4f} (Thresh: {lr_thresh:.2f})")
+    if "Logistic Regression" in active_models:
+        class_weight_param = "balanced" if use_class_weight else None
+        lr_base = LogisticRegression(
+            class_weight=class_weight_param, max_iter=1000, random_state=42
+        )
+        lr_best, lr_params = tune_model("Logistic Regression", lr_base, LR_GRID, X_train, y_train)
+        lr_thresh = find_best_threshold(lr_best, X_train, y_train)
+        trained_models["Logistic Regression"] = lr_best
+        best_params_map["Logistic Regression"] = lr_params
+        all_metrics["Logistic Regression"] = {
+            "metrics": evaluate_model(lr_best, X_test, y_test, lr_thresh),
+            "feature_importance": get_feature_importance(lr_best, feature_names, "Logistic Regression"),
+        }
+        print(f"  Test F1: {all_metrics['Logistic Regression']['metrics']['f1']:.4f} (Thresh: {lr_thresh:.2f})")
 
     # Random Forest
-    rf_base = RandomForestClassifier(class_weight="balanced", random_state=42)
-    rf_best, rf_params = tune_model("Random Forest", rf_base, RF_GRID, X_train, y_train)
-    rf_thresh = find_best_threshold(rf_best, X_train, y_train)
-    trained_models["Random Forest"] = rf_best
-    best_params_map["Random Forest"] = rf_params
-    all_metrics["Random Forest"] = {
-        "metrics": evaluate_model(rf_best, X_test, y_test, rf_thresh),
-        "feature_importance": get_feature_importance(rf_best, feature_names, "Random Forest"),
-    }
-    print(f"  Test F1: {all_metrics['Random Forest']['metrics']['f1']:.4f} (Thresh: {rf_thresh:.2f})")
+    if "Random Forest" in active_models:
+        class_weight_param = "balanced" if use_class_weight else None
+        rf_base = RandomForestClassifier(class_weight=class_weight_param, random_state=42)
+        rf_best, rf_params = tune_model("Random Forest", rf_base, RF_GRID, X_train, y_train)
+        rf_thresh = find_best_threshold(rf_best, X_train, y_train)
+        trained_models["Random Forest"] = rf_best
+        best_params_map["Random Forest"] = rf_params
+        all_metrics["Random Forest"] = {
+            "metrics": evaluate_model(rf_best, X_test, y_test, rf_thresh),
+            "feature_importance": get_feature_importance(rf_best, feature_names, "Random Forest"),
+        }
+        print(f"  Test F1: {all_metrics['Random Forest']['metrics']['f1']:.4f} (Thresh: {rf_thresh:.2f})")
 
     # XGBoost
-    pos_weight = (len(y_train) - sum(y_train)) / sum(y_train)
-    xgb_base = XGBClassifier(
-        scale_pos_weight=pos_weight,
-        eval_metric="logloss",
-        random_state=42,
-    )
-    xgb_best, xgb_params = tune_model("XGBoost", xgb_base, XGB_GRID, X_train, y_train)
-    xgb_thresh = find_best_threshold(xgb_best, X_train, y_train)
-    trained_models["XGBoost"] = xgb_best
-    best_params_map["XGBoost"] = xgb_params
-    all_metrics["XGBoost"] = {
-        "metrics": evaluate_model(xgb_best, X_test, y_test, xgb_thresh),
-        "feature_importance": get_feature_importance(xgb_best, feature_names, "XGBoost"),
-    }
-    print(f"  Test F1: {all_metrics['XGBoost']['metrics']['f1']:.4f} (Thresh: {xgb_thresh:.2f})")
+    if "XGBoost" in active_models:
+        pos_weight = (len(y_train) - sum(y_train)) / sum(y_train) if (use_class_weight and sum(y_train) > 0) else 1.0
+        xgb_base = XGBClassifier(
+            scale_pos_weight=pos_weight,
+            eval_metric="logloss",
+            random_state=42,
+        )
+        xgb_best, xgb_params = tune_model("XGBoost", xgb_base, XGB_GRID, X_train, y_train)
+        xgb_thresh = find_best_threshold(xgb_best, X_train, y_train)
+        trained_models["XGBoost"] = xgb_best
+        best_params_map["XGBoost"] = xgb_params
+        all_metrics["XGBoost"] = {
+            "metrics": evaluate_model(xgb_best, X_test, y_test, xgb_thresh),
+            "feature_importance": get_feature_importance(xgb_best, feature_names, "XGBoost"),
+        }
+        print(f"  Test F1: {all_metrics['XGBoost']['metrics']['f1']:.4f} (Thresh: {xgb_thresh:.2f})")
+
+    # LightGBM
+    if "LightGBM" in active_models:
+        class_weight_param = "balanced" if use_class_weight else None
+        lgbm_base = LGBMClassifier(
+            class_weight=class_weight_param,
+            random_state=42,
+            verbose=-1,
+        )
+        lgbm_best, lgbm_params = tune_model("LightGBM", lgbm_base, LGBM_GRID, X_train, y_train)
+        lgbm_thresh = find_best_threshold(lgbm_best, X_train, y_train)
+        trained_models["LightGBM"] = lgbm_best
+        best_params_map["LightGBM"] = lgbm_params
+        all_metrics["LightGBM"] = {
+            "metrics": evaluate_model(lgbm_best, X_test, y_test, lgbm_thresh),
+            "feature_importance": get_feature_importance(lgbm_best, feature_names, "LightGBM"),
+        }
+        print(f"  Test F1: {all_metrics['LightGBM']['metrics']['f1']:.4f} (Thresh: {lgbm_thresh:.2f})")
 
     # Voting Ensemble
-    print("Training Voting Ensemble (soft)...")
-    estimators = [
-        ("lr", lr_best),
-        ("rf", rf_best),
-        ("xgb", xgb_best),
-    ]
-    ensemble = VotingClassifier(estimators=estimators, voting="soft")
-    ensemble.fit(X_train, y_train)
-    ens_thresh = find_best_threshold(ensemble, X_train, y_train)
-    trained_models["Ensemble (Voting)"] = ensemble
-    all_metrics["Ensemble (Voting)"] = {
-        "metrics": evaluate_model(ensemble, X_test, y_test, ens_thresh),
-        "feature_importance": [],
-    }
-    print(f"  Test F1: {all_metrics['Ensemble (Voting)']['metrics']['f1']:.4f} (Thresh: {ens_thresh:.2f})")
+    if "Ensemble (Voting)" in active_models:
+        estimators = []
+        if "Logistic Regression" in trained_models:
+            estimators.append(("lr", trained_models["Logistic Regression"]))
+        if "Random Forest" in trained_models:
+            estimators.append(("rf", trained_models["Random Forest"]))
+        if "XGBoost" in trained_models:
+            estimators.append(("xgb", trained_models["XGBoost"]))
+        if "LightGBM" in trained_models:
+            estimators.append(("lgb", trained_models["LightGBM"]))
+            
+        if len(estimators) > 1:
+            print("Training Voting Ensemble (soft)...")
+            ensemble = VotingClassifier(estimators=estimators, voting="soft")
+            ensemble.fit(X_train, y_train)
+            ens_thresh = find_best_threshold(ensemble, X_train, y_train)
+            trained_models["Ensemble (Voting)"] = ensemble
+            all_metrics["Ensemble (Voting)"] = {
+                "metrics": evaluate_model(ensemble, X_test, y_test, ens_thresh),
+                "feature_importance": [],
+            }
+            print(f"  Test F1: {all_metrics['Ensemble (Voting)']['metrics']['f1']:.4f} (Thresh: {ens_thresh:.2f})")
+
+    if not all_metrics:
+        raise ValueError("No models were trained! Please select at least one active model.")
 
     best_model_name = max(all_metrics, key=lambda k: all_metrics[k]["metrics"]["f1"])
     all_metrics["_best_model"] = best_model_name
@@ -192,6 +256,7 @@ def run_training(use_smote=False):
     save_pickle(trained_models, "models.pkl")
     save_json(all_metrics, "metrics.json")
     save_json(best_params_map, "best_params.json")
+    save_json(config, "config.json")
     save_pickle(scaler, "scaler.pkl")
     save_pickle(X_train, "X_train.pkl")
     save_pickle(X_test, "X_test.pkl")
@@ -266,9 +331,21 @@ def get_or_train():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train churn prediction models")
     parser.add_argument("--smote", action="store_true", help="Apply SMOTE to balance classes")
+    parser.add_argument("--drop-collinear", action="store_true", help="Drop collinear/redundant features")
+    parser.add_argument("--drop-noise", action="store_true", help="Drop conflicting noise training rows")
+    parser.add_argument("--no-class-weight", action="store_true", help="Disable class weight balancing")
+    parser.add_argument("--collapse-internet", action="store_true", help="Collapse no internet service categories")
     args = parser.parse_args()
 
-    metrics, best_params = run_training(use_smote=args.smote)
+    config = {
+        "drop_collinear": args.drop_collinear,
+        "drop_noise": args.drop_noise,
+        "use_smote": args.smote,
+        "use_class_weight": not args.no_class_weight,
+        "collapse_internet": args.collapse_internet,
+        "models": ["Logistic Regression", "Random Forest", "XGBoost", "LightGBM", "Ensemble (Voting)"]
+    }
+    metrics, best_params = run_training(config=config)
 
     output = {
         "status": "success",
@@ -279,7 +356,7 @@ if __name__ == "__main__":
         },
         "best_params": best_params,
         "metrics": metrics,
-        "commit": "pipeline: add preprocessing features, gridsearch, class-balance, ensemble",
+        "commit": "pipeline: add configurable class weighting and category collapsing support",
     }
     print("\n---FINAL JSON---")
     sys.stdout.flush()

@@ -81,5 +81,15 @@ export const api = {
       body: JSON.stringify(data),
     }).then(r => r.json()) as Promise<Prediction>,
 
-  retrain: () => get<ModelsResponse>('/retrain'),
+  getConfig: () => get<Record<string, any>>('/config'),
+
+  retrain: (config?: Record<string, any>) =>
+    fetch(`${BASE}/retrain`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config || {}),
+    }).then(r => {
+      if (!r.ok) throw new Error(`API error: ${r.status} ${r.statusText}`);
+      return r.json();
+    }) as Promise<{ status: string; metrics: ModelsResponse; best_params: any }>,
 };

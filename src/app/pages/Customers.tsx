@@ -109,35 +109,35 @@ export function Customers() {
       {/* Table */}
       <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--cs-card)', border: '1px solid var(--cs-border)', boxShadow: '0 4px 24px var(--accent-glass)' }}>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full" style={{ minWidth: '1100px', tableLayout: 'auto' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--cs-border)', background: 'var(--accent-glass)' }}>
                 {['Customer ID', 'Gender', 'Senior', 'Tenure', 'Contract', 'Internet', 'Payment', 'Monthly', 'Total', 'Churn', 'Risk'].map(h => (
-                  <th key={h} className="px-4 py-3 text-left" style={{ fontSize: '11px', fontWeight: 700, color: 'var(--cs-ink-muted)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>{h}</th>
+                  <th key={h} className="px-4 py-3 text-left" style={{ fontSize: '11px', fontWeight: 700, color: 'var(--cs-ink-muted)', textTransform: 'uppercase', letterSpacing: '0.6px', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {filteredBySearch.map((c, i) => (
                 <tr key={c.customerID} style={{ borderBottom: '1px solid var(--cs-border)', background: i % 2 === 0 ? 'transparent' : 'var(--accent-glass)' }}>
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-4" style={{ whiteSpace: 'nowrap' }}>
                     <div style={{ fontWeight: 600, fontSize: '13px', color: 'var(--cs-ink)' }}>{c.customerID}</div>
                   </td>
-                  <td className="px-4 py-4" style={{ fontSize: '13px', color: 'var(--cs-ink-muted)' }}>{c.gender}</td>
-                  <td className="px-4 py-4" style={{ fontSize: '13px', color: 'var(--cs-ink-muted)' }}>{c.SeniorCitizen ? 'Yes' : 'No'}</td>
-                  <td className="px-4 py-4" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--cs-ink)' }}>{c.tenure}</td>
-                  <td className="px-4 py-4" style={{ fontSize: '13px', color: 'var(--cs-ink-muted)' }}>{c.Contract}</td>
-                  <td className="px-4 py-4" style={{ fontSize: '13px', color: 'var(--cs-ink-muted)' }}>{c.InternetService}</td>
-                  <td className="px-4 py-4" style={{ fontSize: '12px', color: 'var(--cs-ink-muted)' }}>{c.PaymentMethod}</td>
-                  <td className="px-4 py-4" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--cs-ink)' }}>${c.MonthlyCharges}</td>
-                  <td className="px-4 py-4" style={{ fontSize: '13px', color: 'var(--cs-ink-muted)' }}>${c.TotalCharges?.toFixed(0) || '-'}</td>
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-4" style={{ fontSize: '13px', color: 'var(--cs-ink-muted)', whiteSpace: 'nowrap' }}>{c.gender}</td>
+                  <td className="px-4 py-4" style={{ fontSize: '13px', color: 'var(--cs-ink-muted)', whiteSpace: 'nowrap' }}>{c.SeniorCitizen ? 'Yes' : 'No'}</td>
+                  <td className="px-4 py-4" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--cs-ink)', whiteSpace: 'nowrap' }}>{c.tenure}</td>
+                  <td className="px-4 py-4" style={{ fontSize: '13px', color: 'var(--cs-ink-muted)', whiteSpace: 'nowrap' }}>{c.Contract}</td>
+                  <td className="px-4 py-4" style={{ fontSize: '13px', color: 'var(--cs-ink-muted)', whiteSpace: 'nowrap' }}>{c.InternetService}</td>
+                  <td className="px-4 py-4" style={{ fontSize: '12px', color: 'var(--cs-ink-muted)', whiteSpace: 'nowrap' }}>{c.PaymentMethod}</td>
+                  <td className="px-4 py-4" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--cs-ink)', whiteSpace: 'nowrap' }}>${c.MonthlyCharges}</td>
+                  <td className="px-4 py-4" style={{ fontSize: '13px', color: 'var(--cs-ink-muted)', whiteSpace: 'nowrap' }}>${c.TotalCharges?.toFixed(0) || '-'}</td>
+                  <td className="px-4 py-4" style={{ whiteSpace: 'nowrap' }}>
                     <span className="px-2 py-0.5 rounded-full text-xs font-semibold"
                       style={{ background: c.Churn === 'Yes' ? 'rgba(239,83,80,0.15)' : 'rgba(102,187,106,0.15)', color: c.Churn === 'Yes' ? 'var(--coral-churn)' : 'var(--green-safe)' }}>
                       {c.Churn}
                     </span>
                   </td>
-                  <td className="px-4 py-4"><RiskPill risk={c.risk_band} /></td>
+                  <td className="px-4 py-4" style={{ whiteSpace: 'nowrap' }}><RiskPill risk={c.risk_band} /></td>
                 </tr>
               ))}
             </tbody>
