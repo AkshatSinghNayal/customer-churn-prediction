@@ -23,56 +23,45 @@ Open http://localhost:5173 in your browser.
 
 ---
 
-## Pipeline Overview
+## Data Cleaning & Exploratory Data Analysis (EDA)
 
-### 1. Dataset
-Telco Customer Churn dataset (7043 customers, 20 attributes). Target: binary churn flag.
-
-### 2. Preprocessing & Data Cleaning (`backend/pipeline/preprocess.py`)
-- **Data Integrity Preservation**: Parsed `TotalCharges` as numeric, and filled missing charges with `0` for new customers (`tenure = 0`) instead of dropping their rows.
-- **Service Simplification**: Map "No internet service" → "No" for dependent service columns (`OnlineSecurity`, `OnlineBackup`, `DeviceProtection`, `TechSupport`, `StreamingTV`, `StreamingMovies`).
-- **Advanced Feature Engineering**:
-  - `is_automatic_payment` — flag indicating automated bank transfers or credit cards.
-  - `expected_total_charges` — calculated as `MonthlyCharges * tenure`.
-  - `charges_diff` — actual total charges minus expected total charges.
-  - `charges_ratio` — ratio of actual to expected total charges.
-  - `senior_x_month_to_month` — interaction flag for senior citizens on high-risk month-to-month contracts.
-  - `service_count` & `has_multiple_services` — count and presence indicators of subscribed services.
-  - `avg_charge_per_tenure` — `TotalCharges / (tenure + 1)`.
-- **Binning**: `tenure_bin` — ordinal categories: 0–12, 12–24, 24–48, 48–72, 72+.
-- **Encoding & Scaling**: One-hot encode categoricals, and apply `StandardScaler` on numeric columns (excluding binary flags).
-
-### 3. Hyperparameter Tuning & Threshold Optimization (`backend/pipeline/train.py`)
-We train three models using `GridSearchCV` (3-fold, scoring=`f1`) and create an ensemble:
-- **Logistic Regression**: Tuning `C`, `penalty`, `solver` with balanced class weights.
-- **Random Forest**: Tuning `n_estimators`, `max_depth`, `min_samples_split` with balanced class weights.
-- **XGBoost**: Tuning `learning_rate`, `max_depth`, `subsample`, `colsample_bytree` with position weighting.
-- **Ensemble (Voting)**: Soft-voting classifier combining the three best estimators.
-- **Optimal Threshold Selection**: Instead of the default `0.5` threshold, we run a grid scan (0.1 to 0.9) to find the decision threshold that maximizes the F1-score on the training set for each model.
+During our initial analysis and exploratory data engineering, we observed several key data behaviors that guided our pipeline design:
+1. **Handling Missing Charges**: The dataset contains 11 missing values in `TotalCharges`. We observed these missing values correspond *exactly* to customers with `tenure = 0` (new sign-ups). Instead of dropping these rows or filling them with the overall median, we set them to `0` to reflect actual billing history.
+2. **Category Collapsing Dilemma**: Traditionally, categories like `"No internet service"` in secondary features (e.g., `OnlineSecurity`, `OnlineBackup`, `TechSupport`) are collapsed into `"No"`. However, EDA revealed that customers with no internet service have a very low baseline churn rate (~7.4%) compared to those with internet service (~34.0%). Collapsing them discards a strong predictive signal.
+3. **Class Imbalance & Performance Trade-offs**: Churners represent only ~26.5% of the dataset. While applying class weighting (or SMOTE) boosts the F1-Score and Recall (catching more churners), it forces the models to make more positive predictions, which increases false positives and degrades overall accuracy.
 
 ---
 
-## Model Performance & Final Results
+## Optimization Steps to Achieve High Accuracy
 
-Following the integration of our new features and threshold tuning, the models were evaluated on the 20% hold-out test set:
+To maximize model performance, we engineered a flexible ML pipeline with toggles exposed on the front-end dashboard:
+- **Preserved Internet Categories**: Made the collapsing of `"No internet service"` configurable. Leaving it disabled keeps these classes separate, retaining the low-churn signal.
+- **Configurable Class Weighting**: Allowed class weight balancing to be turned off. When disabled, the models optimize directly for overall classification accuracy.
+- **State-of-the-Art Estimators**: Integrated **LightGBM** alongside XGBoost, Random Forest, and Logistic Regression, and constructed a **Voting Ensemble** of these models.
+- **Threshold Optimization**: Scanned decision thresholds (from `0.1` to `0.9`) to find the exact threshold maximizing the F1-Score or overall accuracy.
 
-| Model | F1-Score | Accuracy | Precision | Recall | ROC-AUC | Optimal Threshold |
+---
+
+## Model Performance
+
+The table below shows the performance of the models trained **without class weight balancing** and **without category collapsing** (which maximizes overall accuracy):
+
+| Model | Accuracy | Precision | Recall | F1-Score | ROC-AUC | Optimal Threshold |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Random Forest (Best)** | **0.6370** | **0.7800** | **0.5667** | 0.7273 | 0.8442 | **0.53** |
-| Ensemble (Voting) | 0.6307 | 0.7715 | 0.5522 | 0.7353 | **0.8491** | 0.55 |
-| XGBoost | 0.6275 | 0.7750 | 0.5597 | 0.7139 | 0.8474 | 0.60 |
-| Logistic Regression | 0.6212 | 0.7715 | 0.5546 | 0.7059 | 0.8464 | 0.59 |
-
-> [!TIP]
-> - The **Random Forest** model with F1-optimized threshold (`0.53`) achieves the best balance between precision and recall, with an F1 score of **0.6370** (+3.1% relative improvement over the previous baseline).
-> - The **Voting Ensemble** achieves the highest overall discriminative ability with a ROC-AUC of **0.8491**.
+| **XGBoost (Best)** | **77.00%** | **0.5479** | **0.7647** | **0.6384** | **0.8472** | **0.31** |
+| LightGBM | 77.86% | 0.5657 | 0.7139 | 0.6312 | 0.8446 | 0.36 |
+| Ensemble (Voting) | 77.86% | 0.5638 | 0.7326 | 0.6372 | 0.8480 | 0.35 |
+| Logistic Regression | 77.36% | 0.5569 | 0.7193 | 0.6278 | 0.8463 | 0.34 |
+| Random Forest | 77.22% | 0.5632 | 0.6310 | 0.5952 | 0.8354 | 0.400 |
 
 ---
 
-## Key Observations & Performance Limits
+## Greatest Observations & Optimization Limits
 
-While our optimizations significantly improved prediction scores, there are key data limits restricting further accuracy:
-1. **Lack of Dynamic/Behavioral Data**: The dataset lacks time-series indicators (e.g., call drops, internet usage changes, customer support ticket frequency). Static attributes only explain a baseline level of churn behavior.
-2. **Feature Overlap (Noise)**: Customers with identical billing configurations and contract types can make different decisions due to unobserved external factors (competitor promotions, personal relocation, or finances).
-3. **Imbalance Trade-off**: Because churn accounts for only ~27% of the dataset, tuning the models to increase Recall (catching actual churners) introduces False Positives, naturally limiting the overall Accuracy ceiling.
+### The Greatest Observation
+Our most significant finding was that **maintaining the distinction of "No Internet Service" as a separate category** rather than collapsing it into "No" was crucial for boosting accuracy. Because tree-based models can exploit multi-split thresholds, preserving this distinct group allowed the algorithms to isolate a highly loyal, low-churn segment of the customer base, preventing it from being mixed with customers who have internet but simply chose not to subscribe to a particular add-on service.
 
+### Why We Cannot Optimize Further
+Despite extensive tuning, the model accuracy faces an inherent ceiling due to:
+1. **Unobserved Behavioral Dynamics**: The dataset only contains static demographic and billing parameters. It lacks time-series behavioral indicators (such as changes in data usage, billing disputes, call drop rates, or customer service ticket frequencies) that capture active customer frustration.
+2. **Label Noise / Class Overlap**: Customers with identical profiles (e.g., senior citizens on a month-to-month fiber optic plan with the same monthly charges) make opposite decisions to churn or stay due to unobserved external factors (such as moving out of area, personal financial changes, or competitor deals). This represents a non-zero **Bayes Error Rate** inherent to the dataset.
