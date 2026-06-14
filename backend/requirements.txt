@@ -3,5 +3,6 @@ uvicorn[standard]
 pandas
 scikit-learn
 xgboost
+lightgbm
 pydantic
 imbalanced-learn
