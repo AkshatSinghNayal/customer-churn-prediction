@@ -6,9 +6,9 @@
   "collapse_internet": false,
   "models": [
     "Logistic Regression",
-    "Random Forest",
     "XGBoost",
     "LightGBM",
+    "Random Forest",
     "Ensemble (Voting)"
   ],
   "opt_metric": "accuracy"
