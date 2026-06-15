@@ -32,12 +32,12 @@ app.add_middleware(
 )
 
 
-@app.get("/api/summary")
+@app.get("/summary")
 def summary():
     return data_service.get_summary()
 
 
-@app.get("/api/customers")
+@app.get("/customers")
 def customers(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -62,12 +62,12 @@ def customers(
     )
 
 
-@app.get("/api/models")
+@app.get("/models")
 def models():
     return model_service.get_all_models()
 
 
-@app.get("/api/models/{name}")
+@app.get("/models/{name}")
 def model_detail(name: str):
     result = model_service.get_model_detail(name)
     if result is None:
@@ -75,12 +75,12 @@ def model_detail(name: str):
     return result
 
 
-@app.get("/api/feature-importance")
+@app.get("/feature-importance")
 def feature_importance():
     return model_service.get_feature_importance()
 
 
-@app.get("/api/predictions")
+@app.get("/predictions")
 def predictions(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -92,7 +92,7 @@ def predictions(
     )
 
 
-@app.get("/api/predict/{customer_id}")
+@app.get("/predict/{customer_id}")
 def predict(customer_id: str):
     result = model_service.predict_single(customer_id)
     if result is None:
@@ -100,7 +100,7 @@ def predict(customer_id: str):
     return result
 
 
-@app.post("/api/predict-custom")
+@app.post("/predict-custom")
 def predict_custom(data: dict = Body(...)):
     model_name = data.pop("model_name", None)
     try:
@@ -109,17 +109,17 @@ def predict_custom(data: dict = Body(...)):
         raise HTTPException(status_code=400, detail=str(exc))
 
 
-@app.get("/api/analytics")
+@app.get("/analytics")
 def analytics():
     return data_service.get_analytics()
 
 
-@app.get("/api/alerts")
+@app.get("/alerts")
 def alerts(read: bool = None, severity: str = None):
     return alert_service.get_alerts(read=read, severity=severity)
 
 
-@app.patch("/api/alerts/{alert_id}")
+@app.patch("/alerts/{alert_id}")
 def update_alert(alert_id: str, read: bool = None, dismissed: bool = None):
     result = alert_service.update_alert(alert_id, read=read, dismissed=dismissed)
     if result is None:
@@ -127,12 +127,12 @@ def update_alert(alert_id: str, read: bool = None, dismissed: bool = None):
     return result
 
 
-@app.get("/api/config")
+@app.get("/config")
 def get_config():
     return model_service.get_config()
 
 
-@app.post("/api/retrain")
+@app.post("/retrain")
 def retrain(config: dict = Body(None)):
     import os
     import shutil
